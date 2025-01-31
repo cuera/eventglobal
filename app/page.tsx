@@ -1,5 +1,7 @@
 "use client"
 
+import { useAuth } from "@/lib/auth-context"
+import { LoginForm } from "@/components/login-form"
 import { LocationSelector } from "@/components/location-selector"
 import { EventCard } from "@/components/event-card"
 import { ProfilePicture } from "@/components/profile-picture"
@@ -25,8 +27,13 @@ const item = {
 }
 
 export default function Home() {
+  const { user } = useAuth()
   // Respect user's reduced motion preferences
   const shouldReduceMotion = useReducedMotion()
+
+  if (!user) {
+    return <LoginForm />
+  }
 
   return (
     <motion.div className="space-y-6 p-4" variants={container} initial="hidden" animate="show">
