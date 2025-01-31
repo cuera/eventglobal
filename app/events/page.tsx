@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ArrowUp, Heart, Camera } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from "next/image"
@@ -51,16 +51,11 @@ const initialPhotos: Photo[] = [
   }
 ]
 
-export default function EventsPage() {
-  const { user } = useAuth()
+/**
+ * Custom hook to handle scroll-to-top functionality
+ */
+function useScrollToTop() {
   const [showScrollTop, setShowScrollTop] = useState(false)
-  const [photoData, setPhotoData] = useState(initialPhotos)
-  const [isCameraOpen, setIsCameraOpen] = useState(false)
-
-  // If no user is logged in, show login form
-  if (!user) {
-    return <LoginForm />
-  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -71,31 +66,45 @@ export default function EventsPage() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const scrollToTop = () => {
+  const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
+
+  return { showScrollTop, scrollToTop }
+}
+
+export default function EventsPage() {
+  const { user } = useAuth()
+  const { showScrollTop, scrollToTop } = useScrollToTop()
+  const [photoData, setPhotoData] = useState(initialPhotos)
+  const [isCameraOpen, setIsCameraOpen] = useState(false)
+
+  // If no user is logged in, show login form
+  if (!user) {
+    return <LoginForm />
   }
 
-  const handleHeartClick = (id: number) => {
+  const handleHeartClick = useCallback((id: number) => {
     setPhotoData(prevData =>
       prevData.map(photo =>
         photo.id === id ? { ...photo, hearts: photo.hearts + 1 } : photo
       )
     )
-  }
+  }, [])
 
-  const handlePhotoCapture = (photoData: { imageUrl: string; caption: string; username: string }) => {
+  const handlePhotoCapture = useCallback((photoData: { imageUrl: string; caption: string; username: string }) => {
     const newPhoto: Photo = {
       id: Date.now(),
       username: photoData.username,
       imageUrl: photoData.imageUrl,
       caption: photoData.caption,
-      aspectRatio: "aspect-[3/4]", // Default aspect ratio
+      aspectRatio: "aspect-[3/4]",
       gridArea: "span 2 / span 1",
       hearts: 0
     }
 
     setPhotoData(prevData => [newPhoto, ...prevData])
-  }
+  }, [])
 
   return (
     <div className="max-w-md mx-auto pb-16">
@@ -131,10 +140,12 @@ export default function EventsPage() {
                 <div className={`relative ${photo.aspectRatio}`}>
                   {photo.imageUrl.startsWith('data:') ? (
                     // For captured photos (data URLs)
-                    <img
+                    <Image
                       src={photo.imageUrl}
                       alt={photo.caption}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      unoptimized // Required for data URLs
                     />
                   ) : (
                     // For static images

@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Camera, Image, Facebook, Instagram } from 'lucide-react'
+import { Home, Camera, Image as ImageIcon, Facebook, Instagram } from 'lucide-react'
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
@@ -26,7 +26,7 @@ export function BottomNav() {
               href="/events"
               className={`flex flex-col items-center ${pathname === "/events" ? "text-primary" : "text-muted-foreground"}`}
             >
-              <Image className="w-6 h-6" />
+              <ImageIcon className="w-6 h-6" />
               <span className="text-xs mt-1">Gallery</span>
             </Link>
             <button
