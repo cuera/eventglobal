@@ -5,6 +5,7 @@ import { Camera, X, Image as ImageIcon, RotateCcw } from 'lucide-react'
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
+import Image from "next/image"
 
 interface CameraModalProps {
   isOpen: boolean
@@ -150,10 +151,12 @@ export function CameraModal({ isOpen, onClose, onPhotoCapture }: CameraModalProp
             ) : (
               <div className="h-full flex flex-col">
                 <div className="relative flex-1">
-                  <img
+                  <Image
                     src={capturedImage}
                     alt="Captured photo"
-                    className="w-full h-full object-cover"
+                    layout="fill"
+                    objectFit="cover"
+                    className="w-full h-full"
                   />
                 </div>
                 <div className="bg-black/80 p-4 space-y-4">
