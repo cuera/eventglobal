@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Camera, X, Image as ImageIcon, RotateCcw } from 'lucide-react'
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,20 @@ export function CameraModal({ isOpen, onClose, onPhotoCapture }: CameraModalProp
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
   const [caption, setCaption] = useState("")
+
+  // Start camera when modal opens
+  useEffect(() => {
+    if (isOpen && !stream && !capturedImage) {
+      startCamera()
+    }
+    
+    // Cleanup when component unmounts or modal closes
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop())
+      }
+    }
+  }, [isOpen, stream, capturedImage])
 
   const startCamera = async () => {
     try {
@@ -97,11 +111,6 @@ export function CameraModal({ isOpen, onClose, onPhotoCapture }: CameraModalProp
       })
       handleClose()
     }
-  }
-
-  // Start camera when modal opens
-  if (isOpen && !stream && !capturedImage) {
-    startCamera()
   }
 
   return (
