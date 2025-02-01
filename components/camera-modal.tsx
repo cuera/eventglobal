@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Camera, X, Image as ImageIcon, RotateCcw } from 'lucide-react'
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -26,83 +26,102 @@ export function CameraModal({ isOpen, onClose, onPhotoCapture }: CameraModalProp
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
   const [caption, setCaption] = useState("")
 
-  // Start camera when modal opens
   useEffect(() => {
-    if (isOpen && !stream && !capturedImage) {
-      startCamera()
+    let currentStream: MediaStream | null = null;
+
+    async function initCamera() {
+      if (isOpen && !stream && !capturedImage) {
+        try {
+          const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+              facingMode: 'environment',
+              width: { ideal: 1920 },
+              height: { ideal: 1080 }
+            }, 
+            audio: false 
+          })
+          currentStream = mediaStream
+          setStream(mediaStream)
+          if (videoRef.current) {
+            videoRef.current.srcObject = mediaStream
+          }
+          setHasPermission(true)
+        } catch (err) {
+          console.error("Error accessing camera:", err)
+          setHasPermission(false)
+        }
+      }
     }
-    
-    // Cleanup when component unmounts or modal closes
+
+    initCamera()
+
     return () => {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop())
+      }
       if (stream) {
         stream.getTracks().forEach(track => track.stop())
+        setStream(null)
       }
     }
   }, [isOpen, stream, capturedImage])
 
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+  const stopCamera = useCallback(() => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop())
+      setStream(null)
+    }
+  }, [stream])
+
+  const handleClose = useCallback(() => {
+    stopCamera()
+    setCapturedImage(null)
+    setCaption("")
+    onClose()
+  }, [stopCamera, onClose])
+
+  const capturePhoto = useCallback(() => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current
+      const canvas = canvasRef.current
+      
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      
+      const context = canvas.getContext('2d')
+      if (context) {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height)
+        const imageUrl = canvas.toDataURL('image/jpeg', 0.8)
+        setCapturedImage(imageUrl)
+        stopCamera()
+      }
+    }
+  }, [stopCamera])
+
+  const retakePhoto = useCallback(() => {
+    setCapturedImage(null)
+    if (isOpen) {
+      navigator.mediaDevices.getUserMedia({ 
         video: { 
           facingMode: 'environment',
           width: { ideal: 1920 },
           height: { ideal: 1080 }
         }, 
         audio: false 
+      }).then(mediaStream => {
+        setStream(mediaStream)
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream
+        }
+        setHasPermission(true)
+      }).catch(err => {
+        console.error("Error accessing camera:", err)
+        setHasPermission(false)
       })
-      setStream(stream)
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-      }
-      setHasPermission(true)
-    } catch (err) {
-      console.error("Error accessing camera:", err)
-      setHasPermission(false)
     }
-  }
+  }, [isOpen])
 
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop())
-      setStream(null)
-    }
-  }
-
-  const handleClose = () => {
-    stopCamera()
-    setCapturedImage(null)
-    setCaption("")
-    onClose()
-  }
-
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current
-      const canvas = canvasRef.current
-      
-      // Set canvas size to match video dimensions
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-      
-      // Draw the video frame to the canvas
-      const context = canvas.getContext('2d')
-      if (context) {
-        context.drawImage(video, 0, 0, canvas.width, canvas.height)
-        
-        // Convert to data URL
-        const imageUrl = canvas.toDataURL('image/jpeg', 0.8)
-        setCapturedImage(imageUrl)
-        stopCamera()
-      }
-    }
-  }
-
-  const retakePhoto = () => {
-    setCapturedImage(null)
-    startCamera()
-  }
-
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     if (capturedImage && user && onPhotoCapture) {
       onPhotoCapture({
         imageUrl: capturedImage,
@@ -111,7 +130,7 @@ export function CameraModal({ isOpen, onClose, onPhotoCapture }: CameraModalProp
       })
       handleClose()
     }
-  }
+  }, [capturedImage, user, onPhotoCapture, caption, handleClose])
 
   return (
     <AnimatePresence>
