@@ -57,6 +57,10 @@ const initialPhotos: Photo[] = [
 function useScrollToTop() {
   const [showScrollTop, setShowScrollTop] = useState(false)
 
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
+
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 200)
@@ -64,10 +68,6 @@ function useScrollToTop() {
 
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  const scrollToTop = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
 
   return { showScrollTop, scrollToTop }
@@ -78,11 +78,6 @@ export default function EventsPage() {
   const { showScrollTop, scrollToTop } = useScrollToTop()
   const [photoData, setPhotoData] = useState(initialPhotos)
   const [isCameraOpen, setIsCameraOpen] = useState(false)
-
-  // If no user is logged in, show login form
-  if (!user) {
-    return <LoginForm />
-  }
 
   const handleHeartClick = useCallback((id: number) => {
     setPhotoData(prevData =>
@@ -105,6 +100,11 @@ export default function EventsPage() {
 
     setPhotoData(prevData => [newPhoto, ...prevData])
   }, [])
+
+  // If no user is logged in, show login form
+  if (!user) {
+    return <LoginForm />
+  }
 
   return (
     <div className="max-w-md mx-auto pb-16">
