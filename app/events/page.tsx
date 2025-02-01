@@ -56,7 +56,6 @@ const initialPhotos: Photo[] = [
  */
 function useScrollToTop() {
   const [showScrollTop, setShowScrollTop] = useState(false)
-
   const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
@@ -74,11 +73,11 @@ function useScrollToTop() {
 }
 
 export default function EventsPage() {
+  // Move all hooks to the top
   const { user } = useAuth()
   const { showScrollTop, scrollToTop } = useScrollToTop()
   const [photoData, setPhotoData] = useState(initialPhotos)
   const [isCameraOpen, setIsCameraOpen] = useState(false)
-
   const handleHeartClick = useCallback((id: number) => {
     setPhotoData(prevData =>
       prevData.map(photo =>
@@ -86,7 +85,6 @@ export default function EventsPage() {
       )
     )
   }, [])
-
   const handlePhotoCapture = useCallback((photoData: { imageUrl: string; caption: string; username: string }) => {
     const newPhoto: Photo = {
       id: Date.now(),
@@ -97,11 +95,10 @@ export default function EventsPage() {
       gridArea: "span 2 / span 1",
       hearts: 0
     }
-
     setPhotoData(prevData => [newPhoto, ...prevData])
   }, [])
 
-  // If no user is logged in, show login form
+  // Early return after all hooks are defined
   if (!user) {
     return <LoginForm />
   }
