@@ -28,7 +28,6 @@ const item = {
 
 export default function Home() {
   const { user } = useAuth()
-  // Respect user's reduced motion preferences
   const shouldReduceMotion = useReducedMotion()
 
   if (!user) {
