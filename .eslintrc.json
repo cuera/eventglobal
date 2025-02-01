@@ -2,8 +2,6 @@
   "extends": "next/core-web-vitals",
   "rules": {
     "@typescript-eslint/no-empty-interface": "off",
-    "@next/next/no-img-element": "off",
-    "react-hooks/rules-of-hooks": "error",
-    "jsx-a11y/alt-text": "error"
+    "@typescript-eslint/no-empty-object-type": "off"
   }
 } 

@@ -8,7 +8,7 @@ import { Clock, Heart } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 
-export interface EventCardProps {
+interface EventCardProps {
   title: string
   time: string
   date: string
